@@ -6,7 +6,18 @@ const observer = new MutationObserver(() => {
     const currentVideoId = params.get("v");
     if (lastVideoId !== currentVideoId) {
         lastVideoId = currentVideoId;
-        console.log("Detected new video of id:", currentVideoId);
+        console.log("Detected video change to id:", currentVideoId);
+
+        const video = document.querySelector("video");
+        const videoTitle = document.title.replace(" - YouTube", "");
+        const currentTime = video.currentTime;
+        browser.runtime.sendMessage({
+            type: "NEW_VIDEO",
+            id: currentVideoId,
+            title: videoTitle,
+            time: currentTime
+        });
+
     }
 });
 
