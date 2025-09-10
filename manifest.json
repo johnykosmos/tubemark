@@ -1,0 +1,23 @@
+{
+    "manifest_version": 3,
+    "name": "Tubemark",
+    "description": "Tracks YouTube videos you watch and resumes from where you left off",
+    "version": "1.0",
+    "permissions" : [
+        "storage"
+    ],
+    "content_scripts": [
+        {
+            "matches": ["https://www.youtube.com/watch*"],
+            "js": ["youtube_script.js"]
+        }
+    ],
+    "action": {
+        "default_title": "Tubemark",
+        "default_popup": "popup.html"
+    }
+
+
+
+}
+
