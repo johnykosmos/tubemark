@@ -1,6 +1,7 @@
 
 let lastVideoId = null;
 let intervalId = null;
+let switchElement = null;
 
 function addTrackerButton(videoId) {
     if (document.getElementById("trackingSwitchWrapper")) return;
@@ -59,7 +60,17 @@ function addTrackerButton(videoId) {
     });
 
     document.body.appendChild(wrapper);
+    return wrapper;
 }
+
+// HIDE SWITCH ON FULLSCREEN
+document.addEventListener("fullscreenchange", () => {
+    if (switchElement && document.fullscreenElement) {
+        switchElement.style.visibility = "hidden";
+    } else {
+        switchElement.style.visibility = "visible";
+    }
+});
 
 const observer = new MutationObserver(() => {
     const params = new URLSearchParams(window.location.search);
@@ -70,9 +81,8 @@ const observer = new MutationObserver(() => {
         }
 
         lastVideoId = currentVideoId;
-        addTrackerButton(currentVideoId);
+        switchElement = addTrackerButton(currentVideoId);
         console.log("Detected video change to id:", currentVideoId);
-
     }
 });
 
