@@ -1,9 +1,9 @@
 
 let lastVideoId = null;
+let currentVideoId = null;
 let intervalId = null;
-let switchElement = null;
 
-function addTrackerButton(videoId) {
+function addTrackerSwitch() {
     if (document.getElementById("trackingSwitchWrapper")) return;
 
     const wrapper = document.createElement("div");
@@ -28,43 +28,48 @@ function addTrackerButton(videoId) {
     wrapper.appendChild(label);
     wrapper.appendChild(status);
 
-    checkbox.addEventListener("change", () => {
+
+    checkbox.onchange = () => {
         const tracking = checkbox.checked;
+
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+
         if (tracking) {
             status.textContent = "Tracking ON";
             const video = document.querySelector("video");
             const videoTitle = document.title.replace(" - YouTube", "");
             browser.runtime.sendMessage({
                 type: "NEW_VIDEO",
-                id: videoId,
+                id: currentVideoId,
                 title: videoTitle,
                 time: video ? video.currentTime : 0
             });
 
             intervalId = setInterval(() => {
+                const video = document.querySelector("video");
                 browser.runtime.sendMessage({
                     type: "UPDATE_VIDEO",
-                    id: videoId,
+                    id: currentVideoId,
                     time: (video) ? video.currentTime : 0
                 });
             } , 10000);
         } else {
             status.textContent = "Tracking OFF";
-            clearInterval(intervalId);
             browser.runtime.sendMessage({
-                    type: "REMOVE_VIDEO",
-                    id: videoId
-                });
-            return;
+                type: "REMOVE_VIDEO",
+                id: currentVideoId
+            });
         }
-    });
+    };
 
     document.body.appendChild(wrapper);
-    return wrapper;
 }
 
-// HIDE SWITCH ON FULLSCREEN
 document.addEventListener("fullscreenchange", () => {
+    const switchElement = document.getElementById("trackingSwitchWrapper");
     if (switchElement && document.fullscreenElement) {
         switchElement.style.visibility = "hidden";
     } else {
@@ -72,17 +77,22 @@ document.addEventListener("fullscreenchange", () => {
     }
 });
 
+addTrackerSwitch();
+
 const observer = new MutationObserver(() => {
     const params = new URLSearchParams(window.location.search);
-    const currentVideoId = params.get("v");
+    currentVideoId = params.get("v");
     if (lastVideoId !== currentVideoId) {
         if (intervalId) {
             clearInterval(intervalId);
+            intervalId = null;
         }
 
         lastVideoId = currentVideoId;
-        switchElement = addTrackerButton(currentVideoId);
-        console.log("Detected video change to id:", currentVideoId);
+        const checkbox = document.getElementById("trackingSwitch");
+        const status = document.getElementById("trackingStatus");
+        checkbox.checked = false;
+        status.textContent = "Tracking OFF";
     }
 });
 
