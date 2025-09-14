@@ -1,32 +1,23 @@
 
 
 browser.runtime.onMessage.addListener((message, _) => {
-    switch (message.type) {
-        case "NEW_VIDEO":
-            browser.storage.local.get("videos").then((data) => {
-                const videos = data.videos || {};
+    return browser.storage.local.get("videos").then((data) => {
+        const videos = data.videos || {};
+        switch (message.type) {
+            case "NEW_VIDEO":
                 videos[message.id] = {
                     id: message.id,
                     title: message.title,
                     time: message.time || 0
                 };
-                browser.storage.local.set({videos: videos});
-            });
-            break;
-        case "UPDATE_VIDEO":
-            browser.storage.local.get("videos").then((data) => {
-                const videos = data.videos || {};
+                return browser.storage.local.set({videos: videos});
+            case "UPDATE_VIDEO":
                 videos[message.id].time = message.time || 0;
-                browser.storage.local.set({videos: videos});
-            });
-            break;
-        case "REMOVE_VIDEO":
-            browser.storage.local.get("videos").then((data) => {
-                const videos = data.videos || {};
+                return browser.storage.local.set({videos: videos});
+            case "REMOVE_VIDEO":
                 delete videos[message.id]; 
-                browser.storage.local.set({videos: videos});
-            });
-            break;
-    } 
+                return browser.storage.local.set({videos: videos});
+        } 
+    });
 });
 
