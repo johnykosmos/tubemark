@@ -6,6 +6,11 @@
     "permissions" : [
         "storage"
     ],
+
+    "icons": {
+        "48": "icons/icon48.png"
+    },
+
     "background": {
         "scripts": ["background.js"]
     },
@@ -14,7 +19,7 @@
         {
             "matches": ["https://www.youtube.com/watch*"],
             "js": ["content.js"],
-            "css": ["style.css"],
+            "css": ["styles/contentstyle.css"],
             "run_at": "document_idle"
         }
     ],

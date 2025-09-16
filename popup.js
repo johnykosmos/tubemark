@@ -11,13 +11,16 @@ browser.storage.local.get("videos").then((data) => {
     const videos = data.videos || {};
     for (let videoId in videos) {
         const video = videos[videoId];
+        const thumbUrl = `https://img.youtube.com/vi/${video.id}/hqdefault.jpg`;
         const a = document.createElement("a");
-        const videoMark = document.createElement("p");
+        const tile = document.createElement("div");
+        tile.className = "video-tile";
+        tile.style.backgroundImage = `url(${thumbUrl})`;
         a.href = `https://www.youtube.com/watch?v=${video.id}&t=${Math.floor(video.time)}`;
         a.target = "_blank";
         a.textContent = video.title + "    " + getFancyTimeString(video.time);
-        videoMark.appendChild(a);
-        videoList.appendChild(videoMark);       
+        tile.appendChild(a);
+        videoList.appendChild(tile);       
     }
 });
 
