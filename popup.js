@@ -18,7 +18,23 @@ browser.storage.local.get("videos").then((data) => {
         tile.style.backgroundImage = `url(${thumbUrl})`;
         a.href = `https://www.youtube.com/watch?v=${video.id}&t=${Math.floor(video.time)}`;
         a.target = "_blank";
-        a.textContent = video.title + "    " + getFancyTimeString(video.time);
+
+        const progressBar = document.createElement("div");
+        progressBar.className = "progress-bar";
+
+        const progressFill = document.createElement("div");
+        progressFill.className = "progress-fill";
+
+        const fillPercent = video.duration ? video.time / video.duration * 100 : 0;
+        progressFill.style.width = fillPercent + "%";
+        progressBar.appendChild(progressFill);
+
+        const title = document.createElement("span");
+        title.className = "video-title";
+        title.textContent = video.title;
+
+        a.appendChild(progressBar);
+        a.appendChild(title);
         tile.appendChild(a);
         videoList.appendChild(tile);       
     }

@@ -20,7 +20,8 @@ function updateTrackerSwitch() {
             type: "NEW_VIDEO",
             id: currentVideoId,
             title: videoTitle,
-            time: video ? video.currentTime : 0
+            time: video ? video.currentTime : 0,
+            duration: video ? video.duration : 0
         });
 
         intervalId = setInterval(() => {

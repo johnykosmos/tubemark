@@ -8,7 +8,8 @@ browser.runtime.onMessage.addListener((message, _) => {
                 videos[message.id] = {
                     id: message.id,
                     title: message.title,
-                    time: message.time || 0
+                    time: message.time || 0,
+                    duration: message.duration || 0
                 };
                 return browser.storage.local.set({videos: videos});
             case "UPDATE_VIDEO":
