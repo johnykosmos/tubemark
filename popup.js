@@ -1,11 +1,31 @@
 
+const tabs = document.querySelectorAll(".tab-button"); 
+const tabsContent = document.querySelectorAll(".tab-content");
 const videoList = document.getElementById("video-list");
+let activeTab = -1;
 
 function getFancyTimeString(time) {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return (minutes) + ((seconds < 10) ? ":0" : ":") + seconds % 60;
 }
+
+function setTabActive(element, index) {
+    if (activeTab !== -1) {
+        tabs[activeTab].classList.remove("active");
+        tabsContent[activeTab].style.visibility = "hidden";
+    }
+
+    element.classList.add("active"); 
+    tabsContent[index].style.visibility = "visible"
+    activeTab = index;
+}
+
+if (activeTab === -1) setTabActive(tabs[0], 0);
+
+tabs.forEach((element, index) => {
+    element.onclick = () => setTabActive(element, index); 
+});
 
 browser.storage.local.get("videos").then((data) => {
     const videos = data.videos || {};
