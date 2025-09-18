@@ -1,8 +1,9 @@
 
 
 browser.runtime.onMessage.addListener((message, _) => {
-    return browser.storage.local.get("videos").then((data) => {
+    return browser.storage.local.get(["videos", "marks"]).then((data) => {
         const videos = data.videos || {};
+        const marks = data.marks || {};
         switch (message.type) {
             case "NEW_VIDEO":
                 videos[message.id] = {
@@ -21,7 +22,19 @@ browser.runtime.onMessage.addListener((message, _) => {
             case "REMOVE_VIDEO":
                 delete videos[message.id]; 
                 return browser.storage.local.set({videos: videos});
-        } 
+            case "MARK_VIDEO":
+                if (!marks[message.id]) {
+                    marks[message.id] = {
+                        id: message.id,
+                        title: message.title,
+                        time: [],
+                        duration: message.duration || 0
+                    };
+                }
+                
+                marks[message.id].time.push(message.time || 0);
+                return browser.storage.local.set({marks: marks});
+        }
     });
 });
 

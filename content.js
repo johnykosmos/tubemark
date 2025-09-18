@@ -4,6 +4,18 @@ let currentVideoId = null;
 let intervalId = null;
 let checkbox;
 
+function markVideo() {
+    const video = document.querySelector("video");
+    const videoTitle = document.title.replace(" - YouTube", "");
+    browser.runtime.sendMessage({
+        type: "MARK_VIDEO",
+        id: currentVideoId,
+        title: videoTitle,
+        time: video ? video.currentTime : 0,
+        duration: video ? video.duration : 0
+    });
+}
+
 function updateTrackerSwitch() {
     const status = document.getElementById("trackingStatus");
     const tracking = checkbox.checked;
@@ -41,15 +53,25 @@ function updateTrackerSwitch() {
     }
 }
 
-function addTrackerSwitch() {
-    if (document.getElementById("trackingSwitchWrapper")) return;
+function createControls() {
+    if (document.getElementById("controlWrapper")) return;
 
     const wrapper = document.createElement("div");
-    wrapper.id = "trackingSwitchWrapper";
+    wrapper.className = "controlWrapper";
+    wrapper.id = "controlWrapper";
+
+    const markButton = document.createElement("button");
+    markButton.className = "mark-button";
+    markButton.textContent = "⭐ Mark";
+    markButton.onclick = markVideo;
+
+    const switchWrapper = document.createElement("div");
+    switchWrapper.id = "trackingSwitchWrapper";
 
     checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.id = "trackingSwitch";
+    checkbox.onchange = updateTrackerSwitch;
 
     const slider = document.createElement("span");
     slider.className = "slider";
@@ -63,11 +85,11 @@ function addTrackerSwitch() {
     label.appendChild(checkbox);
     label.appendChild(slider);
 
-    wrapper.appendChild(label);
-    wrapper.appendChild(status);
+    switchWrapper.appendChild(label);
+    switchWrapper.appendChild(status);
 
-
-    checkbox.onchange = updateTrackerSwitch;
+    wrapper.appendChild(markButton);
+    wrapper.appendChild(switchWrapper);
 
     document.body.appendChild(wrapper);
 }
@@ -92,7 +114,7 @@ function waitForVideo(interval = 500, maxTimeout = 10000) {
 }
 
 document.addEventListener("fullscreenchange", () => {
-    const switchElement = document.getElementById("trackingSwitchWrapper");
+    const switchElement = document.getElementById("controlWrapper");
     if (switchElement && document.fullscreenElement) {
         switchElement.style.visibility = "hidden";
     } else {
@@ -100,7 +122,7 @@ document.addEventListener("fullscreenchange", () => {
     }
 });
 
-addTrackerSwitch();
+createControls();
 
 const observer = new MutationObserver(() => {
     const params = new URLSearchParams(window.location.search);

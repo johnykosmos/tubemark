@@ -2,6 +2,7 @@
 const tabs = document.querySelectorAll(".tab-button"); 
 const tabsContent = document.querySelectorAll(".tab-content");
 const videoList = document.getElementById("video-list");
+const markList = document.getElementById("marks-list");
 let activeTab = -1;
 
 function getFancyTimeString(time) {
@@ -13,50 +14,67 @@ function getFancyTimeString(time) {
 function setTabActive(element, index) {
     if (activeTab !== -1) {
         tabs[activeTab].classList.remove("active");
-        tabsContent[activeTab].style.visibility = "hidden";
+        tabsContent[activeTab].style.display = "none";
     }
 
     element.classList.add("active"); 
-    tabsContent[index].style.visibility = "visible"
+    tabsContent[index].style.display = "block"
     activeTab = index;
 }
 
-if (activeTab === -1) setTabActive(tabs[0], 0);
+function createVideoTile(videoData) {
+    const thumbUrl = `https://img.youtube.com/vi/${videoData.id}/hqdefault.jpg`;
+    const a = document.createElement("a");
+    const tile = document.createElement("div");
+    tile.className = "video-tile";
+    tile.style.backgroundImage = `url(${thumbUrl})`;
+    a.href = `https://www.youtube.com/watch?v=${videoData.id}&t=${Math.floor(videoData.time)}`;
+    a.target = "_blank";
 
+    const progressBar = document.createElement("div");
+    progressBar.className = "progress-bar";
+
+    const progressFill = document.createElement("div");
+    progressFill.className = "progress-fill";
+
+    const fillPercent = videoData.duration ? videoData.time / videoData.duration * 100 : 0;
+    progressFill.style.width = fillPercent + "%";
+    progressBar.appendChild(progressFill);
+
+    const title = document.createElement("span");
+    title.className = "video-title";
+    title.textContent = videoData.title;
+
+    a.appendChild(progressBar);
+    a.appendChild(title);
+    tile.appendChild(a);
+
+    return tile;       
+}
+
+if (activeTab === -1) setTabActive(tabs[0], 0);
 tabs.forEach((element, index) => {
     element.onclick = () => setTabActive(element, index); 
 });
 
-browser.storage.local.get("videos").then((data) => {
+browser.storage.local.get(["videos", "marks"]).then((data) => {
     const videos = data.videos || {};
+    const marks = data.marks || {};
     for (let videoId in videos) {
         const video = videos[videoId];
-        const thumbUrl = `https://img.youtube.com/vi/${video.id}/hqdefault.jpg`;
-        const a = document.createElement("a");
-        const tile = document.createElement("div");
-        tile.className = "video-tile";
-        tile.style.backgroundImage = `url(${thumbUrl})`;
-        a.href = `https://www.youtube.com/watch?v=${video.id}&t=${Math.floor(video.time)}`;
-        a.target = "_blank";
-
-        const progressBar = document.createElement("div");
-        progressBar.className = "progress-bar";
-
-        const progressFill = document.createElement("div");
-        progressFill.className = "progress-fill";
-
-        const fillPercent = video.duration ? video.time / video.duration * 100 : 0;
-        progressFill.style.width = fillPercent + "%";
-        progressBar.appendChild(progressFill);
-
-        const title = document.createElement("span");
-        title.className = "video-title";
-        title.textContent = video.title;
-
-        a.appendChild(progressBar);
-        a.appendChild(title);
-        tile.appendChild(a);
-        videoList.appendChild(tile);       
+        videoList.appendChild(createVideoTile(video));
+    }
+    for (let videoId in marks) {
+        const video = marks[videoId];
+        video.time.forEach((timestamp) => {
+            const videoData = {
+                id: video.id,
+                title: video.title,
+                time: timestamp,
+                duration: video.duration
+            };
+            markList.appendChild(createVideoTile(videoData));
+        });
     }
 });
 
