@@ -15,7 +15,6 @@ browser.runtime.onMessage.addListener((message, _) => {
                 return browser.storage.local.set({videos: videos});
             case "UPDATE_VIDEO":
                 videos[message.id].time = message.time || 0;
-                console.log(videos[message.id]);
                 return browser.storage.local.set({videos: videos});
             case "CHECK_VIDEO":
                 return (message.id in videos && videos[message.id].time !== -1) ? 

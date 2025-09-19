@@ -158,7 +158,6 @@ const observer = new MutationObserver(() => {
     }
 });
 
-observer.observe(document, {
+observer.observe(document.querySelector("title"), {
     childList: true,
-    subtree: true
 });
