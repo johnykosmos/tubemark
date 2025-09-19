@@ -2,6 +2,7 @@
 let lastVideoId = null;
 let currentVideoId = null;
 let intervalId = null;
+let alreadySavedVideo = false;
 let checkbox;
 
 function markVideo() {
@@ -26,16 +27,18 @@ function updateTrackerSwitch() {
 
     if (tracking) {
         status.textContent = "Tracking ON";
-        const video = document.querySelector("video");
         const videoTitle = document.title.replace(" - YouTube", "");
-        browser.runtime.sendMessage({
-            type: "NEW_VIDEO",
-            id: currentVideoId,
-            title: videoTitle,
-            time: video ? video.currentTime : 0,
-            duration: video ? video.duration : 0
-        });
-
+        if (!alreadySavedVideo) {
+            waitForVideo().then((video) => {
+                browser.runtime.sendMessage({
+                    type: "NEW_VIDEO",
+                    id: currentVideoId,
+                    title: videoTitle,
+                    time: video ? video.currentTime : 0,
+                    duration: video ? video.duration : 0
+                });
+            });
+        }
         intervalId = setInterval(() => {
             const video = document.querySelector("video");
             browser.runtime.sendMessage({
@@ -128,6 +131,7 @@ const observer = new MutationObserver(() => {
     const params = new URLSearchParams(window.location.search);
     currentVideoId = params.get("v");
     if (lastVideoId !== currentVideoId) {
+        lastVideoId = currentVideoId;
         if (intervalId) {
             clearInterval(intervalId);
             intervalId = null;
@@ -137,19 +141,20 @@ const observer = new MutationObserver(() => {
             type: "CHECK_VIDEO",
             id: currentVideoId
         }).then((response) => {
-            if (response) {
+            if (response && response.time !== -1) {
+                alreadySavedVideo = true;
                 checkbox.checked = true;
                 waitForVideo().then((video) => {
-                    if (video) video.currentTime = response.time;
+                    if (video) {
+                        video.currentTime = response.time;
+                    } 
                 });
             } else {
+                alreadySavedVideo = false;
                 checkbox.checked = false;
             }
             updateTrackerSwitch();
         });
-
-        lastVideoId = currentVideoId;
-
     }
 });
 

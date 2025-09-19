@@ -10,11 +10,12 @@ browser.runtime.onMessage.addListener((message, _) => {
                     title: message.title,
                     time: message.time || 0,
                     timestamps: videos[message.id]?.timestamps || [],
-                    duration: message.duration || 0
+                    duration: message.duration ?? 0
                 };
                 return browser.storage.local.set({videos: videos});
             case "UPDATE_VIDEO":
                 videos[message.id].time = message.time || 0;
+                console.log(videos[message.id]);
                 return browser.storage.local.set({videos: videos});
             case "CHECK_VIDEO":
                 return (message.id in videos && videos[message.id].time !== -1) ? 
@@ -29,7 +30,7 @@ browser.runtime.onMessage.addListener((message, _) => {
                         title: message.title,
                         time: -1,
                         timestamps: [],
-                        duration: message.duration || 0
+                        duration: message.duration ?? 0
                     };
                 }
                 videos[message.id].timestamps.push(message.time || 0);
