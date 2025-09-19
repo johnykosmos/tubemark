@@ -62,23 +62,20 @@ tabs.forEach((element, index) => {
     element.onclick = () => setTabActive(element, index); 
 });
 
-browser.storage.local.get(["videos", "marks"]).then((data) => {
+browser.storage.local.get("videos").then((data) => {
     const videos = data.videos || {};
-    const marks = data.marks || {};
     for (let videoId in videos) {
         const video = videos[videoId];
         videoList.appendChild(createVideoTile(video));
-    }
-    for (let videoId in marks) {
-        const video = marks[videoId];
-        video.time.forEach((timestamp) => {
-            const videoData = {
+
+        video.timestamps.forEach((timestamp) => {
+            const markData = {
                 id: video.id,
                 title: video.title,
                 time: timestamp,
                 duration: video.duration
             };
-            markList.appendChild(createVideoTile(videoData));
+            markList.appendChild(createVideoTile(markData));
         });
     }
 });
