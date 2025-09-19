@@ -66,8 +66,9 @@ browser.storage.local.get("videos").then((data) => {
     const videos = data.videos || {};
     for (let videoId in videos) {
         const video = videos[videoId];
-        videoList.appendChild(createVideoTile(video));
-
+        if (video.time !== -1) {
+            videoList.appendChild(createVideoTile(video));
+        }
         video.timestamps.forEach((timestamp) => {
             const markData = {
                 id: video.id,
