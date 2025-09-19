@@ -106,6 +106,25 @@ h1 .icon {
     background: #ff0000; 
 }
 
+.video-tile .remove-tile-button {
+    position: absolute;
+    top: 1px;
+    right: 5px;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    background: rgba(0,0,0,0.6);
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+    z-index: 999;
+}
+
+.video-tile .remove-tile-button:hover {
+    background: rgba(120,120,120,0.6);
+}
+
 .video-title {
     padding: 6px 8px;
     overflow: hidden;

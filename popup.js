@@ -45,9 +45,14 @@ function createVideoTile(videoData) {
     title.className = "video-title";
     title.textContent = videoData.title;
 
+    const removeButton = document.createElement("button");
+    removeButton.className = "remove-tile-button";
+    removeButton.textContent = "-";
+
     a.appendChild(progressBar);
     a.appendChild(title);
     tile.appendChild(a);
+    tile.appendChild(removeButton);
 
     return tile;       
 }
