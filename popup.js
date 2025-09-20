@@ -79,10 +79,13 @@ tabs.forEach((element, index) => {
 
 browser.storage.local.get("videos").then((data) => {
     const videos = data.videos || {};
+    let hasVideos = false; 
+    let hasMarks = false;
     for (let videoId in videos) {
         const video = videos[videoId];
         if (video.time !== -1) {
             videoList.appendChild(createVideoTile(video));
+            hasVideos = true;
         }
         video.timestamps.forEach((timestamp) => {
             const markData = {
@@ -92,7 +95,22 @@ browser.storage.local.get("videos").then((data) => {
                 duration: video.duration
             };
             markList.appendChild(createVideoTile(markData, isMark=true));
+            hasMarks = true;
         });
+    }
+
+    if (!hasVideos) {
+        const msg = document.createElement("p");
+        msg.className = "empty-message";
+        msg.textContent = "No saved videos yet.";
+        videoList.appendChild(msg);
+    }
+
+    if (!hasMarks) {
+        const msg = document.createElement("p");
+        msg.className = "empty-message";
+        msg.textContent = "No marked moments yet.";
+        markList.appendChild(msg);
     }
 });
 

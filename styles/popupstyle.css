@@ -137,3 +137,9 @@ h1 .icon {
     background: rgba(0,0,0,0.2); 
 }
 
+.empty-message {
+    text-align: center;
+    color: #ccc;
+    padding: 20px;
+    font-style: italic;
+}
