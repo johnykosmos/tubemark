@@ -20,7 +20,11 @@ browser.runtime.onMessage.addListener((message, _) => {
                 return (message.id in videos && videos[message.id].time !== -1) ? 
                     {time: videos[message.id].time} : null;
             case "REMOVE_VIDEO":
-                delete videos[message.id]; 
+                if (videos[message.id]?.time !== -1) {
+                    videos[message.id].time = -1;
+                } else if (videos[message.id]?.timestamps.length === 0) {
+                    delete videos[message.id]; 
+                }
                 return browser.storage.local.set({videos: videos});
             case "MARK_VIDEO":
                 if (!videos[message.id]) {
@@ -33,6 +37,15 @@ browser.runtime.onMessage.addListener((message, _) => {
                     };
                 }
                 videos[message.id].timestamps.push(message.time || 0);
+                return browser.storage.local.set({videos: videos});
+            case "REMOVE_MARK": 
+                if (videos[message.id]?.timestamps.length !== 0) {
+                    const timestampId = videos[message.id].timestamps
+                        .indexOf(message.timestamp);
+                    videos[message.id].timestamps.splice(timestampId, 1);
+                } else if (videos[message.id]?.time !== -1) {
+                    delete videos[message.id];
+                }
                 return browser.storage.local.set({videos: videos});
         }
     });

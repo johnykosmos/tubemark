@@ -22,7 +22,7 @@ function setTabActive(element, index) {
     activeTab = index;
 }
 
-function createVideoTile(videoData) {
+function createVideoTile(videoData, isMark = false) {
     const thumbUrl = `https://img.youtube.com/vi/${videoData.id}/hqdefault.jpg`;
     const a = document.createElement("a");
     const tile = document.createElement("div");
@@ -48,6 +48,21 @@ function createVideoTile(videoData) {
     const removeButton = document.createElement("button");
     removeButton.className = "remove-tile-button";
     removeButton.textContent = "-";
+    removeButton.onclick = () => {
+        if (isMark) {
+            browser.runtime.sendMessage({
+                type: "REMOVE_MARK",
+                id: videoData.id,
+                timestamp: videoData.time
+            });
+        } else {
+            browser.runtime.sendMessage({
+                type: "REMOVE_VIDEO",
+                id: videoData.id
+            });
+        }
+        tile.remove();
+    };
 
     a.appendChild(progressBar);
     a.appendChild(title);
@@ -76,7 +91,7 @@ browser.storage.local.get("videos").then((data) => {
                 time: timestamp,
                 duration: video.duration
             };
-            markList.appendChild(createVideoTile(markData));
+            markList.appendChild(createVideoTile(markData, isMark=true));
         });
     }
 });
