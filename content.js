@@ -62,6 +62,7 @@ function createControls() {
     const wrapper = document.createElement("div");
     wrapper.className = "controlWrapper";
     wrapper.id = "controlWrapper";
+    wrapper.style.display = "none";
 
     const markButton = document.createElement("button");
     markButton.className = "mark-button";
@@ -95,6 +96,8 @@ function createControls() {
     wrapper.appendChild(switchWrapper);
 
     document.body.appendChild(wrapper);
+
+    return wrapper;
 }
 
 function waitForVideo(interval = 500, maxTimeout = 10000) {
@@ -116,25 +119,32 @@ function waitForVideo(interval = 500, maxTimeout = 10000) {
     });
 }
 
+const wrapper = createControls();
+
 document.addEventListener("fullscreenchange", () => {
-    const switchElement = document.getElementById("controlWrapper");
-    if (switchElement && document.fullscreenElement) {
-        switchElement.style.visibility = "hidden";
+    if (wrapper && document.fullscreenElement) {
+        wrapper.style.visibility = "hidden";
     } else {
-        switchElement.style.visibility = "visible";
+        wrapper.style.visibility = "visible";
     }
 });
-
-createControls();
 
 const observer = new MutationObserver(() => {
     const params = new URLSearchParams(window.location.search);
     currentVideoId = params.get("v");
+
     if (lastVideoId !== currentVideoId) {
         lastVideoId = currentVideoId;
         if (intervalId) {
             clearInterval(intervalId);
             intervalId = null;
+        }
+
+        if (!currentVideoId) {
+            wrapper.style.display = "none"; 
+            return;
+        } else {
+            wrapper.style.display = "";       
         }
 
         browser.runtime.sendMessage({
