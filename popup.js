@@ -34,6 +34,15 @@ function setTabActive(element, index) {
     activeTab = index;
 }
 
+function updateListEmptyText(list) {
+    const emptyMsg = list.querySelector(".empty-message");
+    if (list.querySelector(".video-tile")) {
+        emptyMsg.classList.add("hidden"); 
+    } else {
+        emptyMsg.classList.remove("hidden");
+    }
+}
+
 function createVideoTile(videoData, isMark = false) {
     const thumbUrl = `https://img.youtube.com/vi/${videoData.id}/hqdefault.jpg`;
     const a = document.createElement("a");
@@ -75,12 +84,12 @@ function createVideoTile(videoData, isMark = false) {
                 type: "REMOVE_MARK",
                 id: videoData.id,
                 timestamp: videoData.time
-            });
+            }).then(() => updateListEmptyText(markList));
         } else {
             browser.runtime.sendMessage({
                 type: "REMOVE_VIDEO",
                 id: videoData.id
-            });
+            }).then(() => updateListEmptyText(videoList));
         }
         tile.remove();
     };
@@ -100,13 +109,10 @@ tabs.forEach((element, index) => {
 
 browser.storage.local.get("videos").then((data) => {
     const videos = data.videos || {};
-    let hasVideos = false; 
-    let hasMarks = false;
     for (let videoId in videos) {
         const video = videos[videoId];
         if (video.time !== -1) {
             videoList.appendChild(createVideoTile(video));
-            hasVideos = true;
         }
         video.timestamps.forEach((timestamp) => {
             const markData = {
@@ -116,22 +122,11 @@ browser.storage.local.get("videos").then((data) => {
                 duration: video.duration
             };
             markList.appendChild(createVideoTile(markData, isMark=true));
-            hasMarks = true;
         });
     }
 
-    if (!hasVideos) {
-        const msg = document.createElement("p");
-        msg.className = "empty-message";
-        msg.textContent = "No saved videos yet.";
-        videoList.appendChild(msg);
-    }
+    updateListEmptyText(videoList);
+    updateListEmptyText(markList);
 
-    if (!hasMarks) {
-        const msg = document.createElement("p");
-        msg.className = "empty-message";
-        msg.textContent = "No marked moments yet.";
-        markList.appendChild(msg);
-    }
 });
 

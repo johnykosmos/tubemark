@@ -159,3 +159,7 @@ h1 .icon {
     padding: 20px;
     font-style: italic;
 }
+
+.empty-message.hidden{
+    display: none;
+}
