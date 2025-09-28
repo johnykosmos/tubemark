@@ -5,10 +5,22 @@ const videoList = document.getElementById("video-list");
 const markList = document.getElementById("marks-list");
 let activeTab = -1;
 
+function convertTimeDigit(time) {
+    return ((time < 10) ? ":0" : ":") + time;
+}
+
 function getFancyTimeString(time) {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
-    return (minutes) + ((seconds < 10) ? ":0" : ":") + seconds % 60;
+    let timeString = "";
+    if (time >= 3600) {
+        const hours = Math.floor(time / 3600);
+        timeString = hours + convertTimeDigit(minutes % 60); 
+    } else {
+        timeString = minutes;
+    }
+
+    return timeString + convertTimeDigit(seconds);
 }
 
 function setTabActive(element, index) {
@@ -31,15 +43,24 @@ function createVideoTile(videoData, isMark = false) {
     a.href = `https://www.youtube.com/watch?v=${videoData.id}&t=${Math.floor(videoData.time)}`;
     a.target = "_blank";
 
+    const progressWrapper = document.createElement("div");
+    progressWrapper.className = "progress-wrapper";
+
     const progressBar = document.createElement("div");
     progressBar.className = "progress-bar";
 
     const progressFill = document.createElement("div");
     progressFill.className = "progress-fill";
-
     const fillPercent = videoData.duration ? videoData.time / videoData.duration * 100 : 0;
     progressFill.style.width = fillPercent + "%";
     progressBar.appendChild(progressFill);
+
+    const time = document.createElement("span");
+    time.className = "video-time";
+    time.textContent = getFancyTimeString(videoData.time);
+
+    progressWrapper.appendChild(progressBar);
+    progressWrapper.appendChild(time);
 
     const title = document.createElement("span");
     title.className = "video-title";
@@ -64,7 +85,7 @@ function createVideoTile(videoData, isMark = false) {
         tile.remove();
     };
 
-    a.appendChild(progressBar);
+    a.appendChild(progressWrapper);
     a.appendChild(title);
     tile.appendChild(a);
     tile.appendChild(removeButton);
