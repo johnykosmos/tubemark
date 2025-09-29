@@ -30,13 +30,16 @@ browser.runtime.onMessage.addListener((message, _) => {
                 if (!videos[message.id]) {
                     videos[message.id] = {
                         id: message.id,
-                        title: message.title,
+                        title: "",
                         time: -1,
                         timestamps: [],
                         duration: message.duration ?? 0
                     };
                 }
-                videos[message.id].timestamps.push(message.time || 0);
+                videos[message.id].timestamps.push({
+                    title: message.title,
+                    time: message.time || 0
+                });
                 return browser.storage.local.set({videos: videos});
             case "REMOVE_MARK": 
                 if (videos[message.id]?.timestamps.length !== 0) {

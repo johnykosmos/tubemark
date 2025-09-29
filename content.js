@@ -5,16 +5,65 @@ let intervalId = null;
 let alreadySavedVideo = false;
 let checkbox;
 
-function markVideo() {
-    const video = document.querySelector("video");
-    const videoTitle = document.title.replace(" - YouTube", "");
-    browser.runtime.sendMessage({
-        type: "MARK_VIDEO",
-        id: currentVideoId,
-        title: videoTitle,
-        time: video ? video.currentTime : 0,
-        duration: video ? video.duration : 0
+function createMarkPopup() {
+    const popup = document.createElement("div");
+    popup.id = "mark-popup";
+    popup.className = "popup";
+
+    const header = document.createElement("h2");
+    header.textContent = "Save your mark with a title.";
+    popup.appendChild(header);
+
+    const input = document.createElement("input");
+    popup.appendChild(input);
+
+    const buttonsDiv = document.createElement("div");
+    buttonsDiv.className = "action-buttons"; 
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.className = "cancel";
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.addEventListener("click", () => {
+        popup.classList.add("hidden");
     });
+
+    const saveBtn = document.createElement("button");
+    saveBtn.className = "save";
+    saveBtn.textContent = "Save";
+    saveBtn.addEventListener("click", () => {
+        const video = document.querySelector("video");
+        const timestamp = video ? video.currentTime : 0;
+        let title = input.value.trim();
+        console.log(title);
+        if (title === "") {
+            title = "Marked Moment in " + document.title.replace(" - YouTube", "");      
+        }
+        browser.runtime.sendMessage({
+            type: "MARK_VIDEO",
+            id: currentVideoId,
+            title: title,
+            time: timestamp,
+            duration: video ? video.duration : 0
+        }).then(() => {
+            popup.classList.add("hidden")
+            input.value = "";
+        });
+    });
+
+    buttonsDiv.appendChild(cancelBtn);
+    buttonsDiv.appendChild(saveBtn);
+    popup.appendChild(buttonsDiv);
+    document.body.appendChild(popup);
+}
+
+function openMarkPopup() {
+    const popup = document.getElementById("mark-popup");
+    if (!popup) {
+        createMarkPopup();
+    } else {
+        popup.classList.remove("hidden");
+    }
+    
 }
 
 function updateTrackerSwitch() {
@@ -67,7 +116,7 @@ function createControls() {
     const markButton = document.createElement("button");
     markButton.className = "mark-button";
     markButton.textContent = "⭐ Mark";
-    markButton.onclick = markVideo;
+    markButton.onclick = openMarkPopup;
 
     const switchWrapper = document.createElement("div");
     switchWrapper.id = "trackingSwitchWrapper";
