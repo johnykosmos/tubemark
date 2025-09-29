@@ -1,3 +1,16 @@
+/**
+ * Content script injected into YouTube video pages.
+ *
+ * Responsibilities:
+ *  - Add a control bar with:
+ *      - Mark button → save timestamped moments
+ *      - Tracking switch → save and track current video + playback time
+ *  - Open a popup to name timestamp marks
+ *  - Track playback position every 10s while tracking is active
+ *  - Restore saved video state when revisiting
+ *  - Hide controls in fullscreen mode and on pages with no videos
+ *  - Detect video changes via MutationObserver
+ */
 
 let lastVideoId = null;
 let currentVideoId = null;
@@ -5,6 +18,13 @@ let intervalId = null;
 let alreadySavedVideo = false;
 let checkbox;
 
+/**
+ * Creates and injects the popup for saving timestamp marks.
+ * Popup contains:
+ *  - Header
+ *  - Input for custom mark title
+ *  - Cancel / Save buttons
+ */
 function createMarkPopup() {
     const popup = document.createElement("div");
     popup.id = "mark-popup";
@@ -20,6 +40,7 @@ function createMarkPopup() {
     const buttonsDiv = document.createElement("div");
     buttonsDiv.className = "action-buttons"; 
 
+    // Cancel button hides the popup
     const cancelBtn = document.createElement("button");
     cancelBtn.className = "cancel";
     cancelBtn.textContent = "Cancel";
@@ -27,6 +48,7 @@ function createMarkPopup() {
         popup.classList.add("hidden");
     });
 
+    // Save button sends a MARK_VIDEO message
     const saveBtn = document.createElement("button");
     saveBtn.className = "save";
     saveBtn.textContent = "Save";
@@ -34,10 +56,12 @@ function createMarkPopup() {
         const video = document.querySelector("video");
         const timestamp = video ? video.currentTime : 0;
         let title = input.value.trim();
-        console.log(title);
+
+        // Set default title if nothing typed
         if (title === "") {
             title = "Marked Moment in " + document.title.replace(" - YouTube", "");      
         }
+
         browser.runtime.sendMessage({
             type: "MARK_VIDEO",
             id: currentVideoId,
@@ -46,7 +70,7 @@ function createMarkPopup() {
             duration: video ? video.duration : 0
         }).then((response) => {
             if (response.success) {
-                popup.classList.add("hidden")
+                popup.classList.add("hidden");
                 input.value = "";
             }
         });
@@ -58,6 +82,9 @@ function createMarkPopup() {
     document.body.appendChild(popup);
 }
 
+/**
+ * Opens the mark popup, or creates it if it doesn’t exist yet.
+ */
 function openMarkPopup() {
     const popup = document.getElementById("mark-popup");
     if (!popup) {
@@ -65,12 +92,17 @@ function openMarkPopup() {
     } else {
         popup.classList.remove("hidden");
     }
-    
 }
 
+/**
+ * Toggles tracking (saving playback progress every 10s).
+ * - When ON: starts periodic updates to background
+ * - When OFF: stops updates and removes video entry
+ */
 function updateTrackerSwitch() {
     const status = document.getElementById("trackingStatus");
     const tracking = checkbox.checked;
+
     if (intervalId) {
         clearInterval(intervalId);
         intervalId = null;
@@ -79,6 +111,8 @@ function updateTrackerSwitch() {
     if (tracking) {
         status.textContent = "Tracking ON";
         const videoTitle = document.title.replace(" - YouTube", "");
+
+        // Save video entry once at start
         if (!alreadySavedVideo) {
             waitForVideo().then((video) => {
                 browser.runtime.sendMessage({
@@ -90,6 +124,8 @@ function updateTrackerSwitch() {
                 });
             });
         }
+
+        // Periodically update playback position every 10s
         intervalId = setInterval(() => {
             const video = document.querySelector("video");
             browser.runtime.sendMessage({
@@ -97,8 +133,10 @@ function updateTrackerSwitch() {
                 id: currentVideoId,
                 time: (video) ? video.currentTime : 0
             });
-        } , 10000);
+        }, 10000);
+
     } else {
+        // Stop tracking → remove video
         browser.runtime.sendMessage({
             type: "REMOVE_VIDEO",
             id: currentVideoId
@@ -110,6 +148,13 @@ function updateTrackerSwitch() {
     }
 }
 
+/**
+ * Creates and injects the floating controls UI:
+ *  - ⭐ Mark button
+ *  - Tracking switch (toggle + status label)
+ *
+ * @returns {HTMLElement} wrapper element
+ */
 function createControls() {
     if (document.getElementById("controlWrapper")) return;
 
@@ -118,11 +163,13 @@ function createControls() {
     wrapper.id = "controlWrapper";
     wrapper.style.display = "none";
 
+    // ⭐ Mark button
     const markButton = document.createElement("button");
     markButton.className = "mark-button";
     markButton.textContent = "⭐ Mark";
     markButton.onclick = openMarkPopup;
 
+    // Tracking switch UI
     const switchWrapper = document.createElement("div");
     switchWrapper.id = "trackingSwitchWrapper";
 
@@ -154,6 +201,14 @@ function createControls() {
     return wrapper;
 }
 
+/**
+ * Waits until a <video> element appears in the DOM.
+ * Used because YouTube dynamically replaces video elements.
+ *
+ * @param {number} interval - Polling interval in ms
+ * @param {number} maxTimeout - Max total wait time in ms
+ * @returns {Promise<HTMLVideoElement|null>}
+ */
 function waitForVideo(interval = 500, maxTimeout = 10000) {
     return new Promise((resolve) => {
         let passedIntervals = 0;
@@ -173,8 +228,12 @@ function waitForVideo(interval = 500, maxTimeout = 10000) {
     });
 }
 
+// Inject controls into the page
 const wrapper = createControls();
 
+/**
+ * Hide controls in fullscreen mode, restore them otherwise.
+ */
 document.addEventListener("fullscreenchange", () => {
     if (wrapper && document.fullscreenElement) {
         wrapper.style.visibility = "hidden";
@@ -183,17 +242,28 @@ document.addEventListener("fullscreenchange", () => {
     }
 });
 
+/**
+ * Observe changes in <title> → YouTube navigation without full reload.
+ * When video ID changes:
+ *  - Reset tracking interval
+ *  - Show/hide controls
+ *  - Ask background if video is already saved
+ *  - Restore saved playback position if available
+ */
 const observer = new MutationObserver(() => {
     const params = new URLSearchParams(window.location.search);
     currentVideoId = params.get("v");
 
     if (lastVideoId !== currentVideoId) {
         lastVideoId = currentVideoId;
+
+        // Clear old interval if switching videos
         if (intervalId) {
             clearInterval(intervalId);
             intervalId = null;
         }
 
+        // If not a video page → hide controls
         if (!currentVideoId) {
             wrapper.style.display = "none"; 
             return;
@@ -201,6 +271,7 @@ const observer = new MutationObserver(() => {
             wrapper.style.display = "";       
         }
 
+        // Ask background whether this video is already tracked
         browser.runtime.sendMessage({
             type: "CHECK_VIDEO",
             id: currentVideoId
@@ -208,6 +279,8 @@ const observer = new MutationObserver(() => {
             if (response?.success && response.data.time !== -1) {
                 alreadySavedVideo = true;
                 checkbox.checked = true;
+
+                // Restore saved playback time if it is
                 waitForVideo().then((video) => {
                     if (video) {
                         video.currentTime = response.data.time;
@@ -217,11 +290,15 @@ const observer = new MutationObserver(() => {
                 alreadySavedVideo = false;
                 checkbox.checked = false;
             }
+
+            // Start/stop tracking according to checkbox state
             updateTrackerSwitch();
         });
     }
 });
 
+// Observe <title> changes (single-page navigation)
 observer.observe(document.querySelector("title"), {
     childList: true,
 });
+
