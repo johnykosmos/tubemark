@@ -12,20 +12,26 @@ browser.runtime.onMessage.addListener((message, _) => {
                     timestamps: videos[message.id]?.timestamps || [],
                     duration: message.duration ?? 0
                 };
-                return browser.storage.local.set({videos: videos});
+                return browser.storage.local.set({videos: videos}).then(() => {
+                    return { success: true, data: null };
+                });
             case "UPDATE_VIDEO":
                 videos[message.id].time = message.time || 0;
-                return browser.storage.local.set({videos: videos});
+                return browser.storage.local.set({videos: videos}).then(() => {
+                    return { success: true, data: null };
+                });
             case "CHECK_VIDEO":
-                return (message.id in videos && videos[message.id].time !== -1) ? 
-                    {time: videos[message.id].time} : null;
+                const videoExist = (message.id in videos && videos[message.id].time !== -1); 
+                return { success: videoExist, data: videoExist ? {time: videos[message.id].time} : null };
             case "REMOVE_VIDEO":
                 if (videos[message.id]?.time !== -1) {
                     videos[message.id].time = -1;
                 } else if (videos[message.id]?.timestamps.length === 0) {
                     delete videos[message.id]; 
                 }
-                return browser.storage.local.set({videos: videos});
+                return browser.storage.local.set({videos: videos}).then(() => {
+                    return { success: true, data: null };
+                });
             case "MARK_VIDEO":
                 if (!videos[message.id]) {
                     videos[message.id] = {
@@ -40,7 +46,9 @@ browser.runtime.onMessage.addListener((message, _) => {
                     title: message.title,
                     time: message.time || 0
                 });
-                return browser.storage.local.set({videos: videos});
+                return browser.storage.local.set({videos: videos}).then(() => {
+                    return { success: true, data: null };
+                });;
             case "REMOVE_MARK": 
                 if (videos[message.id]?.timestamps.length !== 0) {
                     const timestampId = videos[message.id].timestamps
@@ -49,8 +57,12 @@ browser.runtime.onMessage.addListener((message, _) => {
                 } else if (videos[message.id]?.time !== -1) {
                     delete videos[message.id];
                 }
-                return browser.storage.local.set({videos: videos});
+                return browser.storage.local.set({videos: videos}).then(() => {
+                    return { success: true, data: null };
+                });;
         }
+    }).catch(err => {
+        return { success: false, error: err.message };
     });
 });
 

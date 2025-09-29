@@ -44,9 +44,11 @@ function createMarkPopup() {
             title: title,
             time: timestamp,
             duration: video ? video.duration : 0
-        }).then(() => {
-            popup.classList.add("hidden")
-            input.value = "";
+        }).then((response) => {
+            if (response.success) {
+                popup.classList.add("hidden")
+                input.value = "";
+            }
         });
     });
 
@@ -97,10 +99,13 @@ function updateTrackerSwitch() {
             });
         } , 10000);
     } else {
-        status.textContent = "Tracking OFF";
         browser.runtime.sendMessage({
             type: "REMOVE_VIDEO",
             id: currentVideoId
+        }).then((response) => {
+            if (response.success) {
+                status.textContent = "Tracking OFF";
+            }
         });
     }
 }
@@ -200,12 +205,12 @@ const observer = new MutationObserver(() => {
             type: "CHECK_VIDEO",
             id: currentVideoId
         }).then((response) => {
-            if (response && response.time !== -1) {
+            if (response?.success && response.data.time !== -1) {
                 alreadySavedVideo = true;
                 checkbox.checked = true;
                 waitForVideo().then((video) => {
                     if (video) {
-                        video.currentTime = response.time;
+                        video.currentTime = response.data.time;
                     } 
                 });
             } else {

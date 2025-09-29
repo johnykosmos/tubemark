@@ -84,12 +84,20 @@ function createVideoTile(videoData, isMark = false) {
                 type: "REMOVE_MARK",
                 id: videoData.id,
                 timestamp: videoData.time
-            }).then(() => updateListEmptyText(markList));
+            }).then((response) => {
+                if (response.success) {
+                    updateListEmptyText(markList)
+                }
+            });
         } else {
             browser.runtime.sendMessage({
                 type: "REMOVE_VIDEO",
                 id: videoData.id
-            }).then(() => updateListEmptyText(videoList));
+            }).then((response) => {
+                if (response.success) {
+                    updateListEmptyText(videoList)
+                }
+            });
         }
         tile.remove();
     };
