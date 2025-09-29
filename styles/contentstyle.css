@@ -124,7 +124,7 @@
 }
 
 .popup input:focus {
-  border-color: #3ea6ff;
+  border-color: #b2071d;
 }
 
 .popup .action-buttons {
@@ -154,12 +154,12 @@
 }
 
 .popup button.save {
-  background-color: #3ea6ff;
-  color: #000;
+  background-color: #b2071d;
+  color: #fff;
   font-weight: 500;
 }
 
 .popup button.save:hover {
-  background-color: #65b8ff;
+  background-color: #cf0e27;
 }
 
