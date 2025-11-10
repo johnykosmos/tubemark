@@ -128,11 +128,25 @@ function updateTrackerSwitch() {
         // Periodically update playback position every 10s
         intervalId = setInterval(() => {
             const video = document.querySelector("video");
-            browser.runtime.sendMessage({
-                type: "UPDATE_VIDEO",
-                id: currentVideoId,
-                time: (video) ? video.currentTime : 0
-            });
+            // If ended - stop tracking
+            if (video.currentTime !== video.duration) {
+                browser.runtime.sendMessage({
+                    type: "UPDATE_VIDEO",
+                    id: currentVideoId,
+                    time: (video) ? video.currentTime : 0
+                });
+            } else {
+                browser.runtime.sendMessage({
+                    type: "REMOVE_VIDEO",
+                    id: currentVideoId
+                }).then((response) => {
+                    if (response.success) {
+                        status.textContent = "Tracking OFF";
+                        checkbox.checked = false;
+                        updateTrackerSwitch();
+                    }
+                });
+            }
         }, 10000);
 
     } else {
